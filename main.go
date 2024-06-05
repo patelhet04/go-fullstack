@@ -1,81 +1,55 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Todo struct {
-	ID        int    `json:"id"`
+	ID        int    `json:"id" bson:"_id"`
 	Completed bool   `json:"completed"`
 	Body      string `json:"body"`
 }
 
+var collection *mongo.Collection
+
 func main() {
-	fmt.Println("Hello world")
-
-	todos := []Todo{}
-
+	fmt.Println("Hello World")
+	// load fibre library
 	app := fiber.New()
-
-	// Load godotenv
+	// Load .env file
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading env file")
 	}
 
+	MONGO_URI := os.Getenv("MONGO_URI")
 	PORT := os.Getenv("PORT")
-	// To fetch todo items
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(200).JSON(fiber.Map{"name": "John"})
-	})
+	clientOptions := options.Client().ApplyURI(MONGO_URI)
 
-	// To create a Todo
-	app.Post("/api/todo", func(c *fiber.Ctx) error {
-		todo := &Todo{}
-		// In Go, whenver using a pointer always check for errors
-		// BodyParser binds the request body to the struct
-		if err := c.BodyParser(todo); err != nil {
-			return err
-		}
-		if todo.Body == "" {
-			return c.Status(400).JSON(fiber.Map{"msg": "Body cannot be empty"})
-		}
+	// Initializes the mongodb connection
+	// context.Background(): This provides a default context. In Go, contexts are used to manage
+	// deadlines, cancellation signals, and other request-scoped values across API boundaries.
+	client, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Ping method is used to ensure that MongoDB connection is reachable and the connection is alive
+	// This step is crucial to confirm that the connection to the server has been successfully
+	// established and the server is responsive
+	err = client.Ping(context.Background(), nil)
+	// If the ping fails, it logs the error and exits the program.
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Connected to MongoDB")
+	app.Listen(":" + PORT)
 
-		todo.ID = len(todos) + 1
-		todos = append(todos, *todo)
-		return c.Status(201).JSON(todo)
-	})
-
-	// To update a Todo
-	app.Patch("/api/todo/:id", func(c *fiber.Ctx) error {
-		id := c.Params("id")
-
-		for i, todo := range todos {
-			// Formats the value and returns a string
-			if fmt.Sprint(todo.ID) == id {
-				todos[i].Completed = !todos[i].Completed
-				return c.Status(200).JSON(todos[i])
-			}
-		}
-		return c.Status(404).JSON(fiber.Map{"msg": "No todo found!"})
-	})
-
-	//  Delete a todo
-	app.Delete("/api/todo/:id", func(c *fiber.Ctx) error {
-		id := c.Params("id")
-
-		for i, todo := range todos {
-			if fmt.Sprint(todo.ID) == id {
-				todos = append(todos[:i], todos[i+1:]...)
-				return c.Status(200).JSON(fiber.Map{"msg": "Success"})
-			}
-		}
-		return c.Status(404).JSON(fiber.Map{"msg": "No todo found!"})
-	})
-	log.Fatal(app.Listen(":" + PORT))
 }
