@@ -24,6 +24,7 @@ func main() {
 		return c.Status(200).JSON(fiber.Map{"name": "John"})
 	})
 
+	// To create a Todo
 	app.Post("/api/todo", func(c *fiber.Ctx) error {
 		todo := &Todo{}
 		// In Go, whenver using a pointer always check for errors
@@ -38,6 +39,20 @@ func main() {
 		todo.ID = len(todos) + 1
 		todos = append(todos, *todo)
 		return c.Status(201).JSON(todo)
+	})
+
+	// To update a Todo
+	app.Patch("/api/todo/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+
+		for i, todo := range todos {
+			if fmt.Sprint(todo.ID) == id {
+				todos[i].Completed = !todos[i].Completed
+				return c.Status(200).JSON(todos[i])
+			}
+		}
+		return c.Status(400).JSON(fiber.Map{"msg": "No todo found!"})
+
 	})
 
 	log.Fatal(app.Listen(":4000"))
