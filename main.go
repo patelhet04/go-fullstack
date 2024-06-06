@@ -66,6 +66,7 @@ func main() {
 	// API endpoints
 	app.Get("/api/todos", getTodos)
 	app.Post("/api/todos", createTodo)
+	app.Patch("/api/todos/:id", updateTodos)
 
 	log.Fatal(app.Listen("0.0.0.0:" + PORT))
 }
@@ -114,4 +115,22 @@ func createTodo(c *fiber.Ctx) error {
 
 	todo.ID = insertResult.InsertedID.(primitive.ObjectID)
 	return c.Status(200).JSON(todo)
+}
+
+func updateTodos(c *fiber.Ctx) error {
+	id := c.Params("id")
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.Status(404).JSON(fiber.Map{"msg": "ID cannot be found"})
+	}
+
+	filter := bson.M{"_id": objectId}
+	update := bson.M{"$set": bson.M{"completed": true}}
+	_, err = collection.UpdateOne(context.Background(), filter, update)
+
+	if err != nil {
+		return err
+	}
+	return c.Status(200).JSON(fiber.Map{"msg": "success"})
+
 }
