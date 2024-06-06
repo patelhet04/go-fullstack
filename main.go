@@ -9,14 +9,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Todo struct {
-	ID        int    `json:"id" bson:"_id"`
-	Completed bool   `json:"completed"`
-	Body      string `json:"body"`
+	// Here instead of int we have to use primitive.ObjectID, as mongoDB as its own _id which is of type ObejctId
+	// Furthermore we are using omitempty, as the default value it takes is 0, which will create a _id = ObjectId('000000000000')
+	// So we will just skip the false or default value which is 0
+	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Completed bool               `json:"completed"`
+	Body      string             `json:"body"`
 }
 
 var collection *mongo.Collection
@@ -61,7 +65,7 @@ func main() {
 
 	// API endpoints
 	app.Get("/api/todos", getTodos)
-	// app.Post("/api/todos", createTodo)
+	app.Post("/api/todos", createTodo)
 
 	log.Fatal(app.Listen("0.0.0.0:" + PORT))
 }
@@ -87,4 +91,27 @@ func getTodos(c *fiber.Ctx) error {
 		todos = append(todos, todo)
 	}
 	return c.JSON(todos)
+}
+
+func createTodo(c *fiber.Ctx) error {
+	// This is going to be a pointer
+	// Default values {id:0, completed:false, body:""}
+	todo := new(Todo)
+
+	// Body parser binds the json request into Todo struct
+	if err := c.BodyParser(todo); err != nil {
+		return err
+	}
+
+	if todo.Body == "" {
+		return c.Status(400).JSON(fiber.Map{"msg": "Request body cannot be empty"})
+	}
+
+	insertResult, err := collection.InsertOne(context.Background(), todo)
+	if err != nil {
+		return err
+	}
+
+	todo.ID = insertResult.InsertedID.(primitive.ObjectID)
+	return c.Status(200).JSON(todo)
 }
