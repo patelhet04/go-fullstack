@@ -67,7 +67,7 @@ func main() {
 	app.Get("/api/todos", getTodos)
 	app.Post("/api/todos", createTodo)
 	app.Patch("/api/todos/:id", updateTodos)
-
+	app.Delete("/api/todos/:id", deleteTodos)
 	log.Fatal(app.Listen("0.0.0.0:" + PORT))
 }
 
@@ -132,5 +132,21 @@ func updateTodos(c *fiber.Ctx) error {
 		return err
 	}
 	return c.Status(200).JSON(fiber.Map{"msg": "success"})
+}
 
+func deleteTodos(c *fiber.Ctx) error {
+	id := c.Params("id")
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.Status(404).JSON(fiber.Map{"msg": "ID cannot be found"})
+	}
+
+	filter := bson.M{"_id": objectId}
+	_, err = collection.DeleteOne(context.Background(), filter)
+
+	if err != nil {
+		return err
+	}
+
+	return c.Status(200).JSON(fiber.Map{"msg": "sucess"})
 }
