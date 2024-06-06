@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -49,7 +50,41 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to MongoDB")
-	app.Listen(":" + PORT)
 
+	// defer postpones the excecution of a function on its R.H.S
+	// until the execution of surounding function is completed
+	defer client.Disconnect(context.Background())
+
+	fmt.Println("Connected to MongoDB")
+
+	collection = client.Database("Go-WebApp").Collection("todos")
+
+	// API endpoints
+	app.Get("/api/todos", getTodos)
+	// app.Post("/api/todos", createTodo)
+
+	log.Fatal(app.Listen("0.0.0.0:" + PORT))
+}
+
+func getTodos(c *fiber.Ctx) error {
+	var todos []Todo
+	cursor, err := collection.Find(context.Background(), bson.M{})
+
+	if err != nil {
+		return err
+	}
+
+	defer cursor.Close(context.Background())
+
+	// Iterating through the documents
+	for cursor.Next(context.Background()) {
+		var todo Todo
+		// Decode function is used to convert a BSON representation of a MongoDB document into a Go struct.
+		// Decode takes in the address of struc as parameter, that's why we have used '&' operator
+		if err := cursor.Decode(&todo); err != nil {
+			return err
+		}
+		todos = append(todos, todo)
+	}
+	return c.JSON(todos)
 }
