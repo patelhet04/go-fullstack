@@ -58,11 +58,13 @@ Welcome to the Full Stack Todo Application! This project is a comprehensive solu
    air
    ```
 
-### Thank you for checking out the project! This simple todo application serves as an excellent starting point for creating full stack applications. By exploring this project, you will gain insights into:
+## Conclusion
+
+Thank you for checking out the project! This simple todo application serves as an excellent starting point for creating full stack applications. By exploring this project, you will gain insights into:
 
 - **Creating APIs with Go**: Learn how to build efficient and scalable APIs using the Go programming language and the Fibre web framework.
 - **Integrating APIs with React**: Discover how to seamlessly integrate your Go APIs with a React frontend using Tanstack Query (formerly React Query) for efficient data fetching and state management.
 
-### This project lays a solid foundation for building more complex and feature-rich applications. Dive into the code, experiment with the stack, and see how you can extend its capabilities to suit your needs.
+This project lays a solid foundation for building more complex and feature-rich applications. Dive into the code, experiment with the stack, and see how you can extend its capabilities to suit your needs.
 
 ### Happy coding!
