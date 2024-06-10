@@ -32,11 +32,20 @@ func main() {
 	app := fiber.New()
 
 	// cors
+	// only required in local and not in production
 	app.Use(cors.New(cors.Config{AllowOrigins: "http://localhost:5173", AllowHeaders: "Origin, Content-Type, Accept"}))
+
+	// production setup
+	if os.Getenv("ENV") == "production" {
+		app.Static("/", "./client/dist")
+	}
+
 	// Load .env file
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading env file")
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatal("Error loading env file")
+		}
 	}
 
 	MONGO_URI := os.Getenv("MONGO_URI")
