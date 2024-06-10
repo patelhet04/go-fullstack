@@ -19,7 +19,7 @@ type Todo struct {
 	// Here instead of int we have to use primitive.ObjectID, as mongoDB as its own _id which is of type ObejctId
 	// Furthermore we are using omitempty, as the default value it takes is 0, which will create a _id = ObjectId('000000000000')
 	// So we will just skip the false or default value which is 0
-	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Completed bool               `json:"completed"`
 	Body      string             `json:"body"`
 }
